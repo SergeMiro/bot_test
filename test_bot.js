@@ -2,13 +2,12 @@
 
 // 387442030 - My ID
 // 1712121543 - ID Serge Miro
-// 423752273 - ID Svetlana
 
 /////////////////////////////////////////////////////////////////////////////////
 
 const TelegramBot = require('node-telegram-bot-api');
 
-const token = "6952852803:AAFQZ0vPJdCSyQj0YgATjsuu4cAISSvdVkA";
+const token = "6522058351:AAFbPf4B8MgNVMPvkN6tNDYKk_zYy6se2Cg";
 const adminChatId = "387442030";
 
 const bot = new TelegramBot(token, { polling: true });
