@@ -36,7 +36,7 @@ function toMenu() { //функция возвращает основное ме�
 	};
 }
 
-
+// bot.sendMessage(chatId, 'Команда не распознана 🤔, будьте внимательнее.');
 
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
@@ -44,12 +44,14 @@ function toMenu() { //функция возвращает основное ме�
 bot.on('message', (msg) => { //новый экземпляр бота из библиотеки
 	const chatId = msg.chat.id;
 
-
-	if (msg.text && msg.text.toLowerCase() === '/start') {
-		bot.sendMessage(chatId, 'Выберите одну из опций :', toMenu());
-		return;
+	if (msg.text && msg.text.toLowerCase() === '/start') { //функция проверки администратор ли юзер
+		const userId = msg.from.id;
+		if (userId.toString() === adminChatId) {
+			bot.sendMessage(chatId, 'Вы являетесь администратором данного чат-бота. Вам недоступны функции пользователя 😉');
+		} else {
+			bot.sendMessage(chatId, 'Выберите одну из опций:', toMenu());
+		}
 	}
-
 
 	if (chatId.toString() === adminChatId) {
 		const adminMessage = msg.text;
@@ -81,35 +83,28 @@ bot.on('message', (msg) => { //новый экземпляр бота из би�
 		bot.sendMessage(adminChatId, `${userName} покинул(a) чат`, {
 			reply_markup: {
 				inline_keyboard: [
-					[{ text: 'Восстановить чат', callback_data: `restore_${chatId}` }]
+					[{ text: 'Восстановить чат 🔄', callback_data: `restore_${chatId}` }]
 				]
 			}
 		});
 
 		delete forwardingSessions[chatId];
-		bot.sendMessage(chatId, 'Вы покинули чат.', {
-			reply_markup: {
-				keyboard: [
-					[{ text: 'Связаться с нами 📱' }],
-					[{ text: 'Подать заявку 📃' }],
-					[{ text: 'Наш канал 📣' }],
-				],
-				resize_keyboard: true,
-				one_time_keyboard: false,
-			}
-		});
+		bot.sendMessage(chatId, 'Вы покинули чат.', toMenu());
+
+
 	} else if (forwardingSessions[chatId]) {
 		let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
 		bot.sendMessage(adminChatId, `${userName}:\n${msg.text}`, {
 			reply_markup: {
 				inline_keyboard: [
-					[{ text: 'Ответить', callback_data: `reply_${chatId}` }]
+					[{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]
 				]
 			}
 		});
 	} else {
 		handleRegularMessages(msg, chatId);
 	}
+
 });
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -142,7 +137,7 @@ function handleRegularMessages(msg, chatId) {
 		bot.sendMessage(adminChatId, `ЗАЯВКА от ${msg.from.username || msg.from.first_name}: \n\n${text}`, {
 			reply_markup: {
 				inline_keyboard: [
-					[{ text: 'Ответить', callback_data: `reply_${chatId}` }]
+					[{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]
 				]
 			}
 		});
@@ -150,27 +145,27 @@ function handleRegularMessages(msg, chatId) {
 		return;
 	}
 
-	if (text === 'Подать заявку 📃') {
-		applicationStatus[chatId] = 'awaiting_application';
-		let applicationInstructions = `Отправьте нам ваши данные и мы свяжемся с вами в ближайшее время.\n\n` +
-			`_Ваше имя и фамилия :_\n` +
-			`_Дата рождения :_\n` +
-			`_Страна :_\n` +
-			`_Город :_\n` +
-			`_Комментарий (вопрос) :_`;
-		const options = {
-			parse_mode: 'Markdown',
-			reply_markup: {
-				keyboard: [
-					[{ text: 'Назад' }]
-				],
-				resize_keyboard: true,
-				one_time_keyboard: false
-			}
-		};
-		bot.sendMessage(chatId, applicationInstructions, options);
-		return;
-	}
+	// if (text === 'Подать заявку 📃') {
+	// 	applicationStatus[chatId] = 'awaiting_application';
+	// 	let applicationInstructions = `Отправьте нам ваши данные и мы свяжемся с вами в ближайшее время.\n\n` +
+	// 		`_Ваше имя и фамилия :_\n` +
+	// 		`_Дата рождения :_\n` +
+	// 		`_Страна :_\n` +
+	// 		`_Город :_\n` +
+	// 		`_Комментарий (вопрос) :_`;
+	// 	const options = {
+	// 		parse_mode: 'Markdown',
+	// 		reply_markup: {
+	// 			keyboard: [
+	// 				[{ text: 'Назад' }]
+	// 			],
+	// 			resize_keyboard: true,
+	// 			one_time_keyboard: false
+	// 		}
+	// 	};
+	// 	bot.sendMessage(chatId, applicationInstructions, options);
+	// 	return;
+	// }
 
 	if (text === 'Наш канал 📣') {
 		text = 'Подписывайтесь на наш канал! [Там много интересного:](https://t.me/frexperience)';
@@ -179,8 +174,7 @@ function handleRegularMessages(msg, chatId) {
 	}
 
 	// Если команда не распознана, возвращаем пользователя к основному меню
-	const options = toMenu();
-	bot.sendMessage(chatId, 'Выберите одну из опций:', options);
+	// bot.sendMessage(chatId, 'Команда не распознана 🤔, будьте внимательнее.');
 }
 
 
