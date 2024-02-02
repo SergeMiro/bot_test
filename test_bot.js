@@ -48,72 +48,70 @@ function toFaq() {
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
-bot.on('message', (msg) => { //новый экземпляр бота из библиотеки
+bot.on('message', (msg) => {
 	const chatId = msg.chat.id;
+	const fromId = msg.from.id.toString();
 
-	if (msg.text && msg.text.toLowerCase() === '/start') { //функция проверки администратор ли юзер
-		const userId = msg.from.id;
-		if (userId.toString() === adminChatId) {
-			bot.sendMessage(chatId, 'Вы являетесь администратором данного чат-бота. Вам недоступны функции пользователя 😉');
+	// Если сообщение является командой '/start'
+	if (msg.text && msg.text.toLowerCase() === '/start') {
+		if (fromId === adminChatId) {
+			 bot.sendMessage(chatId, 'Вы являетесь администратором данного чат-бота. Вам недоступны функции пользователя 😉');
 		} else {
-			bot.sendMessage(chatId, 'Выберите одну из опций:', toMenu());
+			 bot.sendMessage(chatId, 'Выберите одну из опций:', toMenu());
 		}
-	}
-
-	if (chatId.toString() === adminChatId) {
-		const adminMessage = msg.text;
-		const userChatId = forwardingSessions[chatId];
-
-		if (userChatId) {
-			bot.sendMessage(userChatId, adminMessage, {
-				reply_markup: {
+	} else if (msg.text === 'Связаться с нами 📱') {
+		 // Если пользователь выбрал опцию связи
+		 bot.sendMessage(chatId, 'Вы уже изучили наш FAQ? В нём вы найдете ответы на многие вопросы.', {
+			  parse_mode: 'Markdown',
+			  reply_markup: {
+					keyboard: [
+						 [{ text: 'Написать нам' }],
+						 [{ text: 'Назад' }]
+					],
+					resize_keyboard: true,
+					one_time_keyboard: true
+			  }
+		 });
+	} else if (msg.text === 'Написать нам') {
+		 // Если пользователь хочет написать администратору
+		 forwardingSessions[chatId] = adminChatId;
+		 bot.sendMessage(chatId, 'Наш оператор ответит на ваше сообщение в ближайшее время. Пожалуйста, напишите ваш вопрос.', {
+			  reply_markup: {
 					keyboard: [[{ text: 'Покинуть чат' }]],
 					resize_keyboard: true,
-					one_time_keyboard: false,
-				}
-			});
-			return;
-		}
-	}
-
-	if (msg.text === 'Связаться с нами 📱') {
-
-		/////////////////////////////////////////////////////
-		forwardingSessions[chatId] = adminChatId;
-		bot.sendMessage(chatId, 'Наш оператор ответит на ваше сообщение в ближайшее время. Пожалуйста, напишите ваш вопрос.', {
-			reply_markup: {
-				keyboard: [[{ text: 'Покинуть чат' }]],
-				resize_keyboard: true,
-				one_time_keyboard: true,
-			}
-		});
+					one_time_keyboard: true,
+			  }
+		 });
 	} else if (msg.text === 'Покинуть чат') {
+		// Если пользователь выбрал покинуть чат
 		let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
 		bot.sendMessage(adminChatId, `${userName} покинул(a) чат`, {
-			reply_markup: {
-				inline_keyboard: [
-					[{ text: 'Восстановить чат 🔄', callback_data: `restore_${chatId}` }]
-				]
-			}
+			 reply_markup: {
+				  inline_keyboard: [
+						[{ text: 'Восстановить чат 🔄', callback_data: `restore_${chatId}` }]
+				  ]
+			 }
 		});
-
 		delete forwardingSessions[chatId];
 		bot.sendMessage(chatId, 'Вы покинули чат.', toMenu());
-
-
-	} else if (forwardingSessions[chatId]) {
-		let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
-		bot.sendMessage(adminChatId, `${userName}:\n${msg.text}`, {
-			reply_markup: {
-				inline_keyboard: [
-					[{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]
-				]
-			}
-		});
+	} else if (forwardingSessions[adminChatId] && fromId === adminChatId) {
+		 // Если администратор отвечает пользователю
+		 const userChatId = forwardingSessions[adminChatId];
+		 bot.sendMessage(userChatId, msg.text);
+		 // Удалить следующую строку, если администратор может отправлять несколько сообщений
+		 // delete forwardingSessions[adminChatId];
+	} else if (forwardingSessions[chatId] && fromId !== adminChatId) {
+		 // Если это сообщение от пользователя к администратору
+		 let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
+		 bot.sendMessage(adminChatId, `${userName}:\n${msg.text}`, {
+			  reply_markup: {
+					inline_keyboard: [[{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]]
+			  }
+		 });
 	} else {
-		handleRegularMessages(msg, chatId);
+		 // Обработка остальных сообщений
+		 handleRegularMessages(msg, chatId);
 	}
-
 });
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,21 +195,31 @@ function handleRegularMessages(msg, chatId) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-
 bot.on('callback_query', (callbackQuery) => {
 	const adminId = callbackQuery.from.id.toString();
 	const data = callbackQuery.data;
+	const chatId = callbackQuery.message.chat.id;
 
-	if (data.startsWith('reply_') && adminId === adminChatId) {
-		const userChatId = data.split('_')[1];
-		forwardingSessions[adminChatId] = userChatId;
-		bot.sendMessage(adminChatId, 'Введите сообщение для ответа:');
-	}
-	else if (data.startsWith('restore_') && adminId === adminChatId) {
-		const userChatId = data.split('_')[1];
-		forwardingSessions[userChatId] = adminChatId;
-		forwardingSessions[adminChatId] = userChatId;
-		bot.sendMessage(adminChatId, 'Чат восстановлен. Можете отправить сообщение.');
+	if (data.startsWith('reply_')) {
+		 if (adminId === adminChatId) {
+			  const userChatId = data.split('_')[1];
+			  forwardingSessions[adminChatId] = userChatId;
+			  bot.sendMessage(adminChatId, 'Введите сообщение для ответа:');
+		 }
+	} else if (data.startsWith('restore_')) {
+		 if (adminId === adminChatId) {
+			  const userChatId = data.split('_')[1];
+			  forwardingSessions[userChatId] = adminChatId;
+			  forwardingSessions[adminChatId] = userChatId;
+			  bot.sendMessage(adminChatId, 'Чат восстановлен. Можете отправить сообщение.');
+			  bot.sendMessage(userChatId, 'Чат восстановлен.', {
+					reply_markup: {
+						 keyboard: [[{ text: 'Покинуть чат' }]],
+						 resize_keyboard: true,
+						 one_time_keyboard: true,
+					}
+			  });
+		 }
 	}
 });
 
