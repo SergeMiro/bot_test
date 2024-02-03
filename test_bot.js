@@ -15,24 +15,24 @@ let forwardingSessions = {};
 let applicationStatus = {};
 
 
-///////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
 ////////////////// ФУНКЦИЯ И ДРУГИЕ ОБРАБОТЧИКИ ДЛЯ КОМАНД /////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
 function toMenu() { //функция возвращает основное меню
 	return {
-		reply_markup: {
-			keyboard: [
-				[{ text: 'Подать заявку 📃' }],
-				[{ text: 'Наш канал 📣' }],
-				[{ text: 'Ответы на вопросы (FAQ) 📖' }],
-				[{ text: 'Связаться с нами 📱' }]
-			],
-			resize_keyboard: true,
-			one_time_keyboard: false
-		}
+		 reply_markup: {
+			  keyboard: [
+					[{ text: 'Подать заявку 📃' }, { text: 'Ответы на вопросы (FAQ) 📖' }],
+					[{ text: 'Наш канал 📣' }, { text: 'Наш сайт 🌏' }],
+					[{ text: 'Связаться с нами 📱' }] // Эта кнопка будет на всю ширину, если вы хотите, чтобы она была 50%, добавьте еще одну кнопку в этот ряд
+			  ],
+			  resize_keyboard: true,
+			  one_time_keyboard: false
+		 }
 	};
 }
+
 
 function toFaq() {
 	// Функция возвращает текст FAQ
@@ -61,29 +61,29 @@ bot.on('message', (msg) => {
 		}
 	} else if (msg.text === 'Связаться с нами 📱') {
 		 // Если пользователь выбрал опцию связи
-		 bot.sendMessage(chatId, 'Вы уже изучили наш FAQ? В нём вы найдете ответы на многие вопросы.', {
+		 bot.sendMessage(chatId, 'Вы уже изучили наш FAQ 📔 ? В нём вы найдете ответы на многие вопросы. [⬇️](https://www.france-experience.fr/files/FAQ_France-Experience.pdf)', {
 			  parse_mode: 'Markdown',
 			  reply_markup: {
 					keyboard: [
-						 [{ text: 'Написать нам' }],
-						 [{ text: 'Назад' }]
+						 [{ text: 'Написать нам ✍️' }],
+						 [{ text: 'Назад ⬅️' }]
 					],
 					resize_keyboard: true,
 					one_time_keyboard: true
 			  }
 		 });
-	} else if (msg.text === 'Написать нам') {
+	} else if (msg.text === 'Написать нам ✍️') {
 		 // Если пользователь хочет написать администратору
 		 forwardingSessions[chatId] = adminChatId;
 		 bot.sendMessage(chatId, 'Наш оператор ответит на ваше сообщение в ближайшее время. Пожалуйста, напишите ваш вопрос.', {
 			  reply_markup: {
-					keyboard: [[{ text: 'Покинуть чат' }]],
+					keyboard: [[{ text: 'Покинуть чат 🚪' }]],
 					resize_keyboard: true,
 					one_time_keyboard: true,
 			  }
 		 });
-	} else if (msg.text === 'Покинуть чат') {
-		// Если пользователь выбрал покинуть чат
+	} else if (msg.text === 'Покинуть чат 🚪') {
+		// Если пользователь выбрал Покинуть чат 🚪
 		let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
 		bot.sendMessage(adminChatId, `${userName} покинул(a) чат`, {
 			 reply_markup: {
@@ -120,8 +120,8 @@ bot.on('message', (msg) => {
 function handleRegularMessages(msg, chatId) {
 	let text = msg.text;
 
-	// Обработка команды "Назад"
-	if (text === 'Назад') {
+	// Обработка команды "Назад ⬅️"
+	if (text === 'Назад ⬅️') {
 		// Сброс статуса подачи заявки, если он активен
 		if (applicationStatus[chatId]) {
 			applicationStatus[chatId] = null;
@@ -164,7 +164,7 @@ function handleRegularMessages(msg, chatId) {
 	// 		parse_mode: 'Markdown',
 	// 		reply_markup: {
 	// 			keyboard: [
-	// 				[{ text: 'Назад' }]
+	// 				[{ text: 'Назад ⬅️' }]
 	// 			],
 	// 			resize_keyboard: true,
 	// 			one_time_keyboard: false
@@ -176,6 +176,11 @@ function handleRegularMessages(msg, chatId) {
 
 	if (text === 'Наш канал 📣') {
 		text = 'Подписывайтесь на наш канал! [Там много интересного:](https://t.me/frexperience)';
+		bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+		return;
+	}
+	if (text === 'Наш сайт 🌏') {
+		text = 'Посетите наш сайт [👇](https://france-experience.fr)';
 		bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
 		return;
 	}
@@ -214,7 +219,7 @@ bot.on('callback_query', (callbackQuery) => {
 			  bot.sendMessage(adminChatId, 'Чат восстановлен. Можете отправить сообщение.');
 			  bot.sendMessage(userChatId, 'Чат восстановлен.', {
 					reply_markup: {
-						 keyboard: [[{ text: 'Покинуть чат' }]],
+						 keyboard: [[{ text: 'Покинуть чат 🚪' }]],
 						 resize_keyboard: true,
 						 one_time_keyboard: true,
 					}
