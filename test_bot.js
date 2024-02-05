@@ -117,25 +117,34 @@ bot.on('message', (msg) => {
 	}
 	// Если администратор отвечает пользователю и активируется сессия чата
 	else if (fromId === adminChatId && forwardingSessions[adminChatId]) {
-		const userChatId = forwardingSessions[adminChatId];
-		// Отправляем сообщение от админа пользователю
-		bot.sendMessage(userChatId, text, {
-			 reply_markup: {
-				  keyboard: [[{ text: 'Покинуть чат 🚪' }]],
-				  resize_keyboard: true,
-				  one_time_keyboard: true,
-			 }
-		});
-		// Активируем сессию чата для пользователя, чтобы он мог ответить
-		forwardingSessions[userChatId] = adminChatId; // Убедитесь, что это правильный ID пользователя
-  }
-  // Если сообщение от пользователя, которое должно быть перенаправлено администратору
-  else if (forwardingSessions[chatId]) {
+		const session = forwardingSessions[adminChatId];
+		if (session.awaitingReply || session.awaitingRestore) {
+			 const userChatId = session.userChatId;
+			 // Отправляем сообщение от админа пользователю и активируем чат
+			 bot.sendMessage(userChatId, text, {
+				  reply_markup: session.awaitingRestore ? {
+						keyboard: [[{ text: 'Покинуть чат 🚪' }]],
+						resize_keyboard: true,
+						one_time_keyboard: true,
+				  } : undefined
+			 }).then(() => {
+				  // Обновляем сессии после отправки сообщения
+				  forwardingSessions[userChatId] = adminChatId;
+				  delete forwardingSessions[adminChatId];
+			 });
+		}
+  
+} else if (forwardingSessions[chatId]) {
 		// Убедитесь, что сообщение перенаправляется администратору
-		bot.sendMessage(forwardingSessions[chatId], `Сообщение от ${msg.from.first_name || 'пользователя'}: ${text}`);
-  }
-	// Проверка на команду "Назад ⬅️" в процессе подачи заявки
-	else if (text === 'Назад ⬅️' && applicationStatus[chatId] === 'awaiting_application') {
+		bot.sendMessage(forwardingSessions[chatId], `Сообщение от ${msg.from.first_name || 'пользователя'}: ${text}`, {
+		// bot.sendMessage(adminChatId, `ЗАЯВКА от ${msg.from.username || msg.from.first_name}: \n\n${text}`, {
+			reply_markup: {
+				inline_keyboard: [
+					[{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]
+				]
+			}
+		});
+  } else if (text === 'Назад ⬅️' && applicationStatus[chatId] === 'awaiting_application') {
 		// Сброс статуса подачи заявки
 		applicationStatus[chatId] = null;
 		// Возврат в основное меню без отправки уведомления администратору
@@ -155,9 +164,7 @@ bot.on('message', (msg) => {
 		});
 		// Возврат в основное меню после отправки заявки
 		bot.sendMessage(chatId, 'Вы вернулись в основное меню:', toMenu());
-	}
-
-	else if (forwardingSessions[adminChatId] && fromId === adminChatId) {
+	} else if (forwardingSessions[adminChatId] && fromId === adminChatId) {
 		// Если администратор отвечает пользователю
 		const userChatId = forwardingSessions[adminChatId];
 		bot.sendMessage(userChatId, text);
@@ -170,7 +177,6 @@ bot.on('message', (msg) => {
 				  inline_keyboard: [[{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]]
 			 }
 		});
-  
   } else if (text === 'Наш канал 📣') {
 		text = 'Подписывайтесь на наш канал! [Там много интересного:](https://t.me/frexperience)';
 		bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
@@ -191,42 +197,21 @@ bot.on('message', (msg) => {
 bot.on('callback_query', (callbackQuery) => {
 	const adminId = callbackQuery.from.id.toString();
 	const data = callbackQuery.data;
-	const chatId = callbackQuery.message.chat.id;
+	const chatId = callbackQuery.message.chat.id; // ID чата администратора
 
 	if (data.startsWith('reply_') && adminId === adminChatId) {
-		 const userChatId = data.split('_')[1];
-		 forwardingSessions[adminChatId] = userChatId;
+		 const userChatId = data.split('_')[1]; // ID пользователя
+		 // Устанавливаем сессию для ответа админа пользователю
+		 forwardingSessions[adminChatId] = { userChatId, awaitingReply: true };
 		 bot.sendMessage(adminChatId, 'Введите сообщение для ответа:');
 	} else if (data.startsWith('restore_') && adminId === adminChatId) {
 		 const userChatId = data.split('_')[1];
-		 forwardingSessions[userChatId] = adminChatId;
-		 forwardingSessions[adminChatId] = userChatId;
-		 bot.sendMessage(adminChatId, 'Чат восстановлен. Можете отправить сообщение.');
-		 bot.sendMessage(userChatId, 'Чат восстановлен.', {
-			  reply_markup: {
-					keyboard: [[{ text: 'Покинуть чат 🚪' }]],
-					resize_keyboard: true,
-					one_time_keyboard: true,
-			  }
-		 });
+		 // Помечаем сессию как ожидающую восстановления
+		 forwardingSessions[adminChatId] = { userChatId, awaitingRestore: true };
+		 // Убрали уведомление о восстановлении чата, чат восстановится после ответа админа
+		 bot.sendMessage(adminChatId, 'Ответьте на сообщение для восстановления чата.');
 	}
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -236,44 +221,23 @@ bot.on('callback_query', (callbackQuery) => {
 // 	const data = callbackQuery.data;
 // 	const chatId = callbackQuery.message.chat.id;
 
-// 	if (data.startsWith('reply_')) {
-//         if (adminId === adminChatId) {
-//             const userChatId = data.split('_')[1];
-//             // Настройка сессии для администратора, чтобы сообщения от этого пользователя перенаправлялись админу
-//             forwardingSessions[adminChatId] = userChatId;
-//             // Активация сессии чата для пользователя
-//             forwardingSessions[userChatId] = adminChatId;
-//             bot.sendMessage(adminChatId, 'Введите сообщение для ответа:');
-//             // Предоставляем пользователю возможность "Покинуть чат" после ответа админа
-//             bot.sendMessage(userChatId, 'Администратор ответит вам в ближайшее время.', {
-//                 reply_markup: {
-//                     keyboard: [[{ text: 'Покинуть чат 🚪' }]],
-//                     resize_keyboard: true,
-//                     one_time_keyboard: true,
-//                 }
-//             });
-//         }
-//     } 
-// 	} else if (data.startsWith('reply_')) {
-// 		if (adminId === adminChatId) {
-// 			const userChatId = data.split('_')[1];
-// 			forwardingSessions[adminChatId] = userChatId;
-// 			bot.sendMessage(adminChatId, 'Введите сообщение для ответа:');
-// 		}
-// 	} else if (data.startsWith('restore_')) {
-// 		if (adminId === adminChatId) {
-// 			const userChatId = data.split('_')[1];
-// 			forwardingSessions[userChatId] = adminChatId;
-// 			forwardingSessions[adminChatId] = userChatId;
-// 			bot.sendMessage(adminChatId, 'Чат восстановлен. Можете отправить сообщение.');
-// 			bot.sendMessage(userChatId, 'Чат восстановлен.', {
-// 				reply_markup: {
+// 	if (data.startsWith('reply_') && adminId === adminChatId) {
+// 		const userChatId = data.split('_')[1];
+// 		//Сохраняем состояние сессии, но не активируем чат сразу
+// 		forwardingSessions[adminChatId] = { userChatId, awaitingReply: true };
+// 		bot.sendMessage(adminChatId, 'Введите сообщение для ответа:');
+// 	} else if (data.startsWith('restore_') && adminId === adminChatId) {
+// 		 const userChatId = data.split('_')[1];
+// 		 forwardingSessions[userChatId] = adminChatId;
+// 		 forwardingSessions[adminChatId] = userChatId;
+// 		 bot.sendMessage(adminChatId, 'Чат восстановлен. Можете отправить сообщение.');
+// 		 bot.sendMessage(userChatId, 'Чат восстановлен.', {
+// 			  reply_markup: {
 // 					keyboard: [[{ text: 'Покинуть чат 🚪' }]],
 // 					resize_keyboard: true,
 // 					one_time_keyboard: true,
-// 				}
-// 			});
-// 		}
+// 			  }
+// 		 });
 // 	}
 // });
 
