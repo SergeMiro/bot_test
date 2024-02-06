@@ -115,25 +115,25 @@ bot.on('message', (msg) => {
 		bot.sendMessage(chatId, applicationInstructions, options);
 	}
 	// Если администратор отвечает пользователю и активируется сессия чата
-	else if (fromId === adminChatId && forwardingSessions[adminChatId]) {
-		const session = forwardingSessions[adminChatId];
-		if (session.awaitingReply || session.awaitingRestore) {
-			 const userChatId = session.userChatId;
-			 // Отправляем сообщение от админа пользователю и активируем чат
-			 bot.sendMessage(userChatId, text, {
-				  reply_markup: session.awaitingRestore ? {
-						keyboard: [[{ text: 'Покинуть чат 🚪' }]],
-						resize_keyboard: true,
-						one_time_keyboard: true,
-				  } : undefined
+	else if (fromId === adminChatId && forwardingSessions[chatId]) {        
+		const session = forwardingSessions[chatId];                                      
+		if (session.awaitingReply || session.awaitingRestore) {                  
+			const userChatId = session.userChatId;                          
+			bot.sendMessage(userChatId, text, {
+			 reply_markup: {
+				  keyboard: [[{ text: 'Покинуть чат 🚪' }]], 
+ 				  resize_keyboard: true,
+ 				  one_time_keyboard: false, 
+ 			 }
 			 }).then(() => {
 				  // Обновляем сессии после отправки сообщения
-				  forwardingSessions[userChatId] = adminChatId;
-				  delete forwardingSessions[adminChatId];
+				  forwardingSessions[userChatId] = chatId;
+				  delete forwardingSessions[chatId];
 			 });
 		}
-  
-} else if (forwardingSessions[chatId]) {
+	}
+
+else if (forwardingSessions[chatId]) {
 		// Убедитесь, что сообщение перенаправляется администратору
 		bot.sendMessage(forwardingSessions[chatId], `Сообщение от ${msg.from.first_name || 'пользователя'}: ${text}`, {
 		// bot.sendMessage(adminChatId, `ЗАЯВКА от ${msg.from.username || msg.from.first_name}: \n\n${text}`, {
@@ -202,35 +202,6 @@ bot.on('callback_query', (callbackQuery) => {
 		 // Помечаем сессию как ожидающую восстановления
 		 forwardingSessions[adminChatId] = { userChatId, awaitingRestore: true };
 		 // Убрали уведомление о восстановлении чата, чат восстановится после ответа админа
-		 bot.sendMessage(adminChatId, 'Ответьте на сообщение для восстановления чата.');
+		 bot.sendMessage(adminChatId, 'Отправьте сообщение для восстановления чата.');
 	}
 });
-
-
-
-
-// bot.on('callback_query', (callbackQuery) => {
-// 	const adminId = callbackQuery.from.id.toString();
-// 	const data = callbackQuery.data;
-// 	const chatId = callbackQuery.message.chat.id;
-
-// 	if (data.startsWith('reply_') && adminId === adminChatId) {
-// 		const userChatId = data.split('_')[1];
-// 		//Сохраняем состояние сессии, но не активируем чат сразу
-// 		forwardingSessions[adminChatId] = { userChatId, awaitingReply: true };
-// 		bot.sendMessage(adminChatId, 'Введите сообщение для ответа:');
-// 	} else if (data.startsWith('restore_') && adminId === adminChatId) {
-// 		 const userChatId = data.split('_')[1];
-// 		 forwardingSessions[userChatId] = adminChatId;
-// 		 forwardingSessions[adminChatId] = userChatId;
-// 		 bot.sendMessage(adminChatId, 'Чат восстановлен. Можете отправить сообщение.');
-// 		 bot.sendMessage(userChatId, 'Чат восстановлен.', {
-// 			  reply_markup: {
-// 					keyboard: [[{ text: 'Покинуть чат 🚪' }]],
-// 					resize_keyboard: true,
-// 					one_time_keyboard: true,
-// 			  }
-// 		 });
-// 	}
-// });
-
