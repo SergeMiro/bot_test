@@ -39,6 +39,19 @@ function toFaq() {
 	};
 }
 
+function toChannel() {
+	return {
+		 text: 'Подписывайтесь на наш канал! [Там много интересного:](https://t.me/frexperience)',
+		 parse_mode: 'Markdown'
+	};
+}
+
+function toSite() {
+	return {
+		 text: 'Посетите наш сайт [👇](https://france-experience.fr)',
+		 parse_mode: 'Markdown'
+	};
+}
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -170,19 +183,26 @@ else if (forwardingSessions[chatId]) {
 				  inline_keyboard: [[{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]]
 			 }
 		});
-  } else if (text === 'Наш канал 📣') {
-		text = 'Подписывайтесь на наш канал! [Там много интересного:](https://t.me/frexperience)';
-		bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
-		return;
-	} else if (text === 'Наш сайт 🌏') {
-		text = 'Посетите наш сайт [👇](https://france-experience.fr)';
-		bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
-		return;
-	} else if (text === 'Ответы на вопросы (FAQ) 📖') {
-		const faqMessage = toFaq();
-		bot.sendMessage(chatId, faqMessage.text, { parse_mode: faqMessage.parse_mode });
+  }  else if (text === 'Ответы на вопросы (FAQ) 📖') {
+	  const faqMessage = toFaq();
+	  bot.sendMessage(chatId, faqMessage.text, { parse_mode: faqMessage.parse_mode });
   }
+  		else if (text === 'Наш канал 📣') {
+		const myChannel = toChannel();
+		bot.sendMessage(chatId, myChannel.text, { parse_mode: myChannel.parse_mode });
+	} else if (text === 'Наш сайт 🌏') {
+		const mySite = toSite();
+		bot.sendMessage(chatId, mySite.text, { parse_mode: mySite.parse_mode });
+	}
 });
+
+
+
+
+
+
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
