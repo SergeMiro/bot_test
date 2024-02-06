@@ -84,7 +84,6 @@ bot.on('message', (msg) => {
 			return; // Прекращаем дальнейшую обработку этого сообщения
 		
 	} else if (text === 'Покинуть чат 🚪') {
-		// Если пользователь выбрал Покинуть чат 🚪
 		let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
 		bot.sendMessage(adminChatId, `${userName} покинул(a) чат`, {
 			reply_markup: {
@@ -164,12 +163,6 @@ bot.on('message', (msg) => {
 		});
 		// Возврат в основное меню после отправки заявки
 		bot.sendMessage(chatId, 'Вы вернулись в основное меню:', toMenu());
-	} else if (forwardingSessions[adminChatId] && fromId === adminChatId) {
-		// Если администратор отвечает пользователю
-		const userChatId = forwardingSessions[adminChatId];
-		bot.sendMessage(userChatId, text);
-		// Удалить следующую строку, если администратор может отправлять несколько сообщений
-		// delete forwardingSessions[adminChatId];
 	} else if (forwardingSessions[chatId] && fromId !== adminChatId) {
 		let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
 		bot.sendMessage(adminChatId, `${userName}:\n${text}`, {
