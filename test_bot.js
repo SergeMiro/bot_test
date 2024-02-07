@@ -41,7 +41,7 @@ function toFaq() {
 
 function toChannel() {
 	return {
-		 text: 'Подписывайтесь на наш канал! [Там много интересного:](https://t.me/frexperience)',
+		 text: 'Подписывайтесь на наш канал! [Там много интересного :](https://t.me/frexperience)',
 		 parse_mode: 'Markdown'
 	};
 }
@@ -67,11 +67,11 @@ bot.on('message', (msg) => {
 		if (fromId === adminChatId) {
 			bot.sendMessage(chatId, 'Вы являетесь администратором данного чат-бота. Вам недоступны функции пользователя 😉');
 		} else {
-			bot.sendMessage(chatId, 'Выберите одну из опций:', toMenu());
+			bot.sendMessage(chatId, 'Выберите одну из опций :', toMenu());
 		}
 	} else if (text === 'Связаться с нами 📱') {
 		// Если пользователь выбрал опцию связи
-		bot.sendMessage(chatId, 'Вы уже изучили наш FAQ 📔 ? В нём вы найдете ответы на многие вопросы. [⬇️](https://www.france-experience.fr/files/FAQ_France-Experience.pdf)', {
+		bot.sendMessage(chatId, 'Вы уже изучили наш FAQ 📔 ? В нём вы найдете ответы на многие вопросы [⬇️](https://www.france-experience.fr/files/FAQ_France-Experience.pdf)', {
 			parse_mode: 'Markdown',
 			reply_markup: {
 				keyboard: [
@@ -93,7 +93,7 @@ bot.on('message', (msg) => {
 			}
 		});
 	} else if (text === 'Покинуть чат 🚪') {
-		let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
+		// let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
 		bot.sendMessage(adminChatId, `${userName} покинул(a) чат`, {
 			reply_markup: {
 				inline_keyboard: [
@@ -105,7 +105,7 @@ bot.on('message', (msg) => {
 		bot.sendMessage(chatId, 'Вы покинули чат.', toMenu());
 	} else if (text === 'Подать заявку 📃' && fromId !== adminChatId) {
 		applicationStatus[chatId] = 'awaiting_application';
-		let applicationInstructions = "Пожалуйста, предоставьте информацию о себе чтобы мы смогли обработать вашу заявку 💻 :\n\n" +
+		let applicationInstructions = "Пожалуйста, предоставьте информацию о себе чтобы мы смогли обработать вашу заявку 💻 \n\n" +
 			"_Ваше имя и фамилия :_\n" +
 			"_Дата рождения :_\n" +
 			"_Страна :_\n" +
@@ -144,8 +144,7 @@ bot.on('message', (msg) => {
 
 else if (forwardingSessions[chatId]) {
 		// Убедитесь, что сообщение перенаправляется администратору
-		bot.sendMessage(forwardingSessions[chatId], `Сообщение от ${msg.from.first_name || 'пользователя'}: ${text}`, {
-		// bot.sendMessage(adminChatId, `ЗАЯВКА от ${msg.from.username || msg.from.first_name}: \n\n${text}`, {
+		bot.sendMessage(forwardingSessions[chatId], `Сообщение от ${userName || 'пользователя'} : \n${text}`, {
 			reply_markup: {
 				inline_keyboard: [
 					[{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]
@@ -163,7 +162,7 @@ else if (forwardingSessions[chatId]) {
 			delete forwardingSessions[chatId];
 		}
 
-		bot.sendMessage(chatId, 'Вы вернулись в основное меню:', toMenu());
+		bot.sendMessage(chatId, 'Вы вернулись в основное меню :', toMenu());
 		return; // Прекращаем дальнейшую обработку этого сообщения
 	}
 	else if (applicationStatus[chatId] === 'awaiting_application' && fromId !== adminChatId) {
@@ -171,7 +170,7 @@ else if (forwardingSessions[chatId]) {
 		// Обработка заявки, если сообщение не является "Назад ⬅️"
 		applicationStatus[chatId] = null; // Сбрасываем статус заявки
 		bot.sendMessage(chatId, 'Ваша заявка успешно отправлена 👍 France Experience свяжется с вами очень скоро 📨');
-		bot.sendMessage(adminChatId, `ЗАЯВКА от **${userName}**: \n${text}`, {
+		bot.sendMessage(adminChatId, `ЗАЯВКА от **${userName}** : \n${text}`, {
 			parse_mode: 'Markdown',
 			reply_markup: {
 				 inline_keyboard: [
@@ -182,7 +181,7 @@ else if (forwardingSessions[chatId]) {
 		// Возврат в основное меню после отправки заявки
 		bot.sendMessage(chatId, 'Вы вернулись в основное меню:', toMenu());
 	} else if (forwardingSessions[chatId] && fromId !== adminChatId) {
-		let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
+		// let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
 		bot.sendMessage(adminChatId, `${userName}:\n${text}`, {
 			 reply_markup: {
 				  inline_keyboard: [[{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]]
@@ -202,13 +201,6 @@ else if (forwardingSessions[chatId]) {
 });
 
 
-
-
-
-
-
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -221,7 +213,7 @@ bot.on('callback_query', (callbackQuery) => {
 		 const userChatId = data.split('_')[1]; // ID пользователя
 		 // Устанавливаем сессию для ответа админа пользователю
 		 forwardingSessions[adminChatId] = { userChatId, awaitingReply: true };
-		 bot.sendMessage(adminChatId, 'Введите сообщение для ответа:');
+		 bot.sendMessage(adminChatId, 'Введите сообщение для ответа :');
 	} else if (data.startsWith('restore_') && adminId === adminChatId) {
 		 const userChatId = data.split('_')[1];
 		 // Помечаем сессию как ожидающую восстановления
