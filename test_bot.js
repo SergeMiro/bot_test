@@ -60,6 +60,7 @@ bot.on('message', (msg) => {
 	const chatId = msg.chat.id;
 	const text = msg.text || '';
 	const fromId = msg.from.id.toString();
+	let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
 
 	// Если сообщение является командой '/start'
 	if (text && text.toLowerCase() === '/start') {
@@ -91,11 +92,6 @@ bot.on('message', (msg) => {
 				one_time_keyboard: true,
 			}
 		});
-	}	else if (text === 'Назад ⬅️') { // Кнопка "НАЗАД" для раздела 
-			// Возврат в основное меню без отправки уведомления администратору
-			bot.sendMessage(chatId, 'Вы вернулись в основное меню:', toMenu());
-			return; // Прекращаем дальнейшую обработку этого сообщения
-		
 	} else if (text === 'Покинуть чат 🚪') {
 		let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
 		bot.sendMessage(adminChatId, `${userName} покинул(a) чат`, {
@@ -156,24 +152,33 @@ else if (forwardingSessions[chatId]) {
 				]
 			}
 		});
-  } else if (text === 'Назад ⬅️' && applicationStatus[chatId] === 'awaiting_application') {
-		// Сброс статуса подачи заявки
-		applicationStatus[chatId] = null;
-		// Возврат в основное меню без отправки уведомления администратору
+  } else if (text === 'Назад ⬅️') {
+		// Сброс статуса подачи заявки, если он был установлен
+		if (applicationStatus[chatId] === 'awaiting_application') {
+			applicationStatus[chatId] = null;
+		}
+
+		// Сброс сессии чата, если она была установлена
+		if (forwardingSessions[chatId]) {
+			delete forwardingSessions[chatId];
+		}
+
 		bot.sendMessage(chatId, 'Вы вернулись в основное меню:', toMenu());
 		return; // Прекращаем дальнейшую обработку этого сообщения
 	}
 	else if (applicationStatus[chatId] === 'awaiting_application' && fromId !== adminChatId) {
+	 	
 		// Обработка заявки, если сообщение не является "Назад ⬅️"
 		applicationStatus[chatId] = null; // Сбрасываем статус заявки
 		bot.sendMessage(chatId, 'Ваша заявка успешно отправлена 👍 France Experience свяжется с вами очень скоро 📨');
-		bot.sendMessage(adminChatId, `ЗАЯВКА от ${msg.from.username || msg.from.first_name}: \n\n${text}`, {
+		bot.sendMessage(adminChatId, `ЗАЯВКА от **${userName}**: \n${text}`, {
+			parse_mode: 'Markdown',
 			reply_markup: {
-				inline_keyboard: [
-					[{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]
-				]
+				 inline_keyboard: [
+					  [{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]
+				 ]
 			}
-		});
+	  });
 		// Возврат в основное меню после отправки заявки
 		bot.sendMessage(chatId, 'Вы вернулись в основное меню:', toMenu());
 	} else if (forwardingSessions[chatId] && fromId !== adminChatId) {
