@@ -170,8 +170,7 @@ else if (forwardingSessions[chatId]) {
 		// Обработка заявки, если сообщение не является "Назад ⬅️"
 		applicationStatus[chatId] = null; // Сбрасываем статус заявки
 		bot.sendMessage(chatId, 'Ваша заявка успешно отправлена 👍 France Experience свяжется с вами очень скоро 📨');
-		bot.sendMessage(adminChatId, `ЗАЯВКА от **${userName}** : \n${text}`, {
-			parse_mode: 'Markdown',
+		bot.sendMessage(adminChatId, `ЗАЯВКА от ${userName} : \n${text}`, {
 			reply_markup: {
 				 inline_keyboard: [
 					  [{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]
@@ -179,7 +178,7 @@ else if (forwardingSessions[chatId]) {
 			}
 	  });
 		// Возврат в основное меню после отправки заявки
-		bot.sendMessage(chatId, 'Вы вернулись в основное меню:', toMenu());
+		bot.sendMessage(chatId, 'Вы вернулись в основное меню :', toMenu());
 	} else if (forwardingSessions[chatId] && fromId !== adminChatId) {
 		// let userName = msg.from.username || `${msg.from.first_name} ${msg.from.last_name || ''}`.trim();
 		bot.sendMessage(adminChatId, `${userName}:\n${text}`, {
