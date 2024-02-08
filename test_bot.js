@@ -60,7 +60,15 @@ bot.on('message', (msg) => {
 	const chatId = msg.chat.id;
 	const text = msg.text || '';
 	const fromId = msg.from.id.toString();
-	let userName = `${msg.from.first_name} ${msg.from.last_name}`.trim() || msg.from.username || 'пользователь';
+	// let userName = `${msg.from.first_name} ${msg.from.last_name}`.trim() || msg.from.username || 'пользователь';
+	let firstName = msg.from.first_name || '';
+	let lastName = msg.from.last_name || '';
+	let nickName = msg.from.username || '';
+	let userName = (firstName + ' ' + lastName).trim() || nickName || 'пользователь';
+	
+
+
+
 
 	// Если сообщение является командой '/start'
 	if (text && text.toLowerCase() === '/start') {
@@ -144,7 +152,7 @@ bot.on('message', (msg) => {
 
 else if (forwardingSessions[chatId]) {
 		// Убедитесь, что сообщение перенаправляется администратору
-		bot.sendMessage(forwardingSessions[chatId], `Сообщение : ${userName} \n${text}`, {
+		bot.sendMessage(forwardingSessions[chatId], `${userName} [сообщение] : \n${text}`, {
 			reply_markup: {
 				inline_keyboard: [
 					[{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]
@@ -170,7 +178,7 @@ else if (forwardingSessions[chatId]) {
 		// Обработка заявки, если сообщение не является "Назад ⬅️"
 		applicationStatus[chatId] = null; // Сбрасываем статус заявки
 		bot.sendMessage(chatId, 'Ваша заявка успешно отправлена 👍 France Experience свяжется с вами очень скоро 📨');
-		bot.sendMessage(adminChatId, `ЗАЯВКА : ${userName} \n${text}`, {
+		bot.sendMessage(adminChatId, `${userName} [ЗАЯВКА] : \n${text}`, {
 			reply_markup: {
 				 inline_keyboard: [
 					  [{ text: 'Ответить ➡️', callback_data: `reply_${chatId}` }]
